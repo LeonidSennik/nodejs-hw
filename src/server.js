@@ -1,7 +1,9 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const pino = require('pino-http');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import pino from 'pino-http';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -24,20 +26,20 @@ app.get('/notes/:noteId', (req, res) => {
   });
 });
 
-//  Тестовий маршрут для помилки
+// Тестовий маршрут для помилки
 app.get('/test-error', () => {
   throw new Error('Simulated server error');
 });
 
-//  Обробка нерозпізнаних маршрутів
+// Обробка нерозпізнаних маршрутів
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-//  Middleware для обробки помилок
+// Middleware для обробки помилок
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ message: err.message || '<повідомлення про помилку>' });
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 
 app.listen(PORT, () => {
