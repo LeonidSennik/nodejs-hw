@@ -2,15 +2,24 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino-http';
+import pretty from 'pino-pretty';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3030;
 
+const logger = pino({
+  logger: pretty({
+    colorize: true,
+    translateTime: 'SYS:standard',
+    ignore: 'pid,hostname',
+  }),
+});
+
 app.use(cors());
 app.use(express.json());
-app.use(pino());
+app.use(logger); 
 
 // Реалізовані маршрути
 app.get('/notes', (req, res) => {
