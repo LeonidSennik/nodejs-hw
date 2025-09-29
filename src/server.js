@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import pino from 'pino-http';
+import pinoHttp from 'pino-http';
+import pino from 'pino';
 import pretty from 'pino-pretty';
 
 dotenv.config();
@@ -9,17 +10,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3030;
 
-const logger = pino({
-  logger: pretty({
-    colorize: true,
-    translateTime: 'SYS:standard',
-    ignore: 'pid,hostname',
-  }),
+//  базовий pino-логгер
+const transport = pretty({
+  colorize: true,
+  translateTime: 'SYS:standard',
+  ignore: 'pid,hostname',
+});
+
+const logger = pinoHttp({
+  logger: pino(transport), 
 });
 
 app.use(cors());
 app.use(express.json());
-app.use(logger); 
+app.use(logger);
 
 // Реалізовані маршрути
 app.get('/notes', (req, res) => {
