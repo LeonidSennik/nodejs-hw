@@ -1,59 +1,41 @@
-import dotenv from 'dotenv';
 import express from 'express';
+import 'dotenv/config';
 import cors from 'cors';
-import pinoHttp from 'pino-http';
-import pino from 'pino';
-import pretty from 'pino-pretty';
-
-dotenv.config();
+import notesRoutes from './routes/notesRoutes.js';
+import { connectMongoDB } from './db/connectMongoDB.js';
+import { logger } from './middleware/logger.js';
+import { notFoundHandler } from './middleware/notFoundHandler.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
-const PORT = process.env.PORT || 3030;
+const PORT = process.env.PORT ?? 3000;
 
-//  базовий pino-логгер
-const transport = pretty({
-  colorize: true,
-  translateTime: 'SYS:standard',
-  ignore: 'pid,hostname',
-});
-
-const logger = pinoHttp({
-  logger: pino(transport), 
-});
-
-app.use(cors());
-app.use(express.json());
+// Middleware
 app.use(logger);
+app.use(express.json());
+app.use(cors());
 
-// Реалізовані маршрути
-app.get('/notes', (req, res) => {
-  res.status(200).json({ message: 'Retrieved all notes' });
+// Маршрути
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Hello world!' });
 });
+app.use(notesRoutes);
 
-// GET /notes/:noteId
-app.get('/notes/:noteId', (req, res) => {
-  const { noteId } = req.params;
-  res.status(200).json({
-    message: `Retrieved note with ID: ${noteId}`
-  });
-});
+// Обробка помилок
+app.use(notFoundHandler);
+app.use(errorHandler);
 
-// Тестовий маршрут для помилки
-app.get('/test-error', () => {
-  throw new Error('Simulated server error');
-});
+// Запуск сервера
+const startServer = async () => {
+  try {
+    await connectMongoDB();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to start server:', err.message);
+    process.exit(1);
+  }
+};
 
-// Обробка нерозпізнаних маршрутів
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-// Middleware для обробки помилок
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ message: err.message || 'Internal Server Error' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Сервер запущено на порті ${PORT}`);
-});
+startServer();
